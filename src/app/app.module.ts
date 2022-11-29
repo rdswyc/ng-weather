@@ -1,10 +1,11 @@
 import { HttpClientModule } from '@angular/common/http';
 import { NgModule } from '@angular/core';
-import { FormsModule } from '@angular/forms';
+import { ReactiveFormsModule } from '@angular/forms';
 import { BrowserModule } from '@angular/platform-browser';
 import { ServiceWorkerModule } from '@angular/service-worker';
 
 import { AppComponent } from './app.component';
+import { AutoFilterComponent } from './auto-filter/auto-filter.component';
 import { CurrentConditionsComponent } from './current-conditions/current-conditions.component';
 import { ForecastsListComponent } from './forecasts-list/forecasts-list.component';
 import { MainPageComponent } from './main-page/main-page.component';
@@ -19,6 +20,7 @@ import { environment } from '../environments/environment';
 @NgModule({
   declarations: [
     AppComponent,
+    AutoFilterComponent,
     CurrentConditionsComponent,
     ForecastsListComponent,
     MainPageComponent,
@@ -27,7 +29,7 @@ import { environment } from '../environments/environment';
   ],
   imports: [
     BrowserModule,
-    FormsModule,
+    ReactiveFormsModule,
     HttpClientModule,
     routing,
     ServiceWorkerModule.register('/ngsw-worker.js', { enabled: environment.production })

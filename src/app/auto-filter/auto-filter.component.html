@@ -1,0 +1,8 @@
+<div class="form-group">
+  <input class="form-control" [formControl]="control" [placeholder]="placeholder"
+    (blur)="blur($event)" (focus)="active.next(true)">
+  <div class="control-options">
+    <span [innerHTML]="option.html" (click)="select(option.value)"
+      *ngFor=" let option of controlOptions$ | async"></span>
+  </div>
+</div>
