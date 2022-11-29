@@ -2,7 +2,6 @@
   <div class="panel panel-default">
     <div class="panel-heading">
       <h3 class="panel-title">5-day forecast for {{forecast?.city.name}}</h3>
-
     </div>
     <ul class="list-group">
       <li *ngFor="let dailyForecast of forecast?.list" class="list-group-item">
@@ -16,4 +15,4 @@
     </ul>
   </div>
 </div>
-<button class="btn btn-success" [routerLink]="'/'" >< Back to main page</button>
+<button class="btn btn-success" [routerLink]="'/'">< Back to main page</button>

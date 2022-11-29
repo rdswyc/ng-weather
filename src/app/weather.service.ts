@@ -1,7 +1,12 @@
+import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import {Observable} from 'rxjs';
+import { Observable } from 'rxjs';
+import { map, take } from 'rxjs/operators';
+import { Forecast } from './forecast';
 
-import {HttpClient} from '@angular/common/http';
+import { Weather } from './weather';
+
+type Condition = { zip: string, data: Weather };
 
 @Injectable()
 export class WeatherService {
@@ -9,34 +14,38 @@ export class WeatherService {
   static URL = 'http://api.openweathermap.org/data/2.5';
   static APPID = '5a4b2d457ecbef9eb2a71e480b947604';
   static ICON_URL = 'https://raw.githubusercontent.com/udacity/Sunshine-Version-2/sunshine_master/app/src/main/res/drawable-hdpi/';
-  private currentConditions = [];
+  private currentConditions: Condition[] = [];
 
   constructor(private http: HttpClient) { }
 
   addCurrentConditions(zipcode: string): void {
-    // Here we make a request to get the curretn conditions data from the API. Note the use of backticks and an expression to insert the zipcode
-    this.http.get(`${WeatherService.URL}/weather?zip=${zipcode},us&units=imperial&APPID=${WeatherService.APPID}`)
-      .subscribe(data => this.currentConditions.push({zip: zipcode, data: data}) );
+    this.fetchCurrentCondition(zipcode).subscribe(data => this.currentConditions.push(data));
   }
 
-  removeCurrentConditions(zipcode: string) {
-    for (let i in this.currentConditions){
+  fetchCurrentCondition(zipcode: string): Observable<Condition> {
+    // Here we make a request to get the current conditions data from the API. Note the use of backticks and an expression to insert the zipcode
+    return this.http.get<Weather>(`${WeatherService.URL}/weather?zip=${zipcode},us&units=imperial&APPID=${WeatherService.APPID}`)
+      .pipe(map(data => ({ zip: zipcode, data: data })), take(1));
+  }
+
+  removeCurrentConditions(zipcode: string): void {
+    for (let i in this.currentConditions) {
       if (this.currentConditions[i].zip == zipcode)
         this.currentConditions.splice(+i, 1);
     }
   }
 
-  getCurrentConditions(): any[] {
+  getCurrentConditions(): Condition[] {
     return this.currentConditions;
   }
 
-  getForecast(zipcode: string): Observable<any> {
+  getForecast(zipcode: string): Observable<Forecast> {
     // Here we make a request to get the forecast data from the API. Note the use of backticks and an expression to insert the zipcode
-    return this.http.get(`${WeatherService.URL}/forecast/daily?zip=${zipcode},us&units=imperial&cnt=5&APPID=${WeatherService.APPID}`);
+    return this.http.get<Forecast>(`${WeatherService.URL}/forecast/daily?zip=${zipcode},us&units=imperial&cnt=5&APPID=${WeatherService.APPID}`);
 
   }
 
-  getWeatherIcon(id){
+  getWeatherIcon(id: number): string {
     if (id >= 200 && id <= 232)
       return WeatherService.ICON_URL + "art_storm.png";
     else if (id >= 501 && id <= 511)
@@ -52,5 +61,4 @@ export class WeatherService {
     else
       return WeatherService.ICON_URL + "art_clear.png";
   }
-
 }
