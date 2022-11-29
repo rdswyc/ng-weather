@@ -1,5 +1,4 @@
 import { Component } from '@angular/core';
-import { Router } from '@angular/router';
 import { LocationService } from 'app/location.service';
 import { WeatherService } from "../weather.service";
 
@@ -11,12 +10,11 @@ import { WeatherService } from "../weather.service";
 export class CurrentConditionsComponent {
 
   constructor(
-    private router: Router,
-    public locationService: LocationService,
-    public weatherService: WeatherService
+    protected locationService: LocationService,
+    protected weatherService: WeatherService
   ) { }
 
-  showForecast(zip: string, country: string) {
-    this.router.navigate(['/forecast', `${zip},${country}`])
+  getRoute(zip: string, country: string) {
+    return ['/forecast', `${zip},${country}`];
   }
 }
