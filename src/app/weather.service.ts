@@ -1,9 +1,9 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { Observable } from 'rxjs';
-import { map, take } from 'rxjs/operators';
-import { Forecast } from './forecast';
+import { BehaviorSubject, forkJoin, from, interval, Observable } from 'rxjs';
+import { bufferCount, concatMap, map, mergeMap, take } from 'rxjs/operators';
 
+import { Forecast } from './forecast';
 import { Weather } from './weather';
 
 type Condition = { zip: string, data: Weather };
@@ -14,12 +14,38 @@ export class WeatherService {
   static URL = 'http://api.openweathermap.org/data/2.5';
   static APPID = '5a4b2d457ecbef9eb2a71e480b947604';
   static ICON_URL = 'https://raw.githubusercontent.com/udacity/Sunshine-Version-2/sunshine_master/app/src/main/res/drawable-hdpi/';
-  private currentConditions: Condition[] = [];
+  static bufferSize = 3;
+  static refreshMs = 30000;
 
-  constructor(private http: HttpClient) { }
+  private currentConditions$ = new BehaviorSubject<Condition[]>([]);
+
+  constructor(private http: HttpClient) {
+    // Refresh weather conditions at every {refreshMs} milliseconds
+    interval(WeatherService.refreshMs).pipe(
+      // Buffer conditions in blocks of {bufferSize} items
+      mergeMap(() => from(this.currentConditions$.value).pipe(bufferCount(WeatherService.bufferSize))),
+      // Join each block in parallel calls for performance and concurrency limit
+      concatMap(conditions => forkJoin(conditions.map(c => this.fetchCurrentCondition(c.zip)))),
+      // Finally, bulk add each block of results to the current conditions
+    ).subscribe(data => this.bulkAddCurrentConditions(data))
+    // No need to unsubscribe since this service is provided in the main AppModule
+  }
 
   addCurrentConditions(zipcode: string): void {
-    this.fetchCurrentCondition(zipcode).subscribe(data => this.currentConditions.push(data));
+    // Append each weather condition in the currentConditions as a new object
+    this.fetchCurrentCondition(zipcode).subscribe(data => this.currentConditions$.next([
+      ...this.currentConditions$.value.filter(c => c.zip !== zipcode),
+      data
+    ]));
+  }
+
+  bulkAddCurrentConditions(conditions: Condition[]) {
+    // Merge weather conditions in the currentConditions, based on their {zip} code
+    const currentConditions = this.currentConditions$.value.map(condition => ({
+      ...condition,
+      ...conditions.find(({ zip }) => zip === condition.zip),
+    }));
+    this.currentConditions$.next(currentConditions);
   }
 
   fetchCurrentCondition(zipcode: string): Observable<Condition> {
@@ -29,20 +55,17 @@ export class WeatherService {
   }
 
   removeCurrentConditions(zipcode: string): void {
-    for (let i in this.currentConditions) {
-      if (this.currentConditions[i].zip == zipcode)
-        this.currentConditions.splice(+i, 1);
-    }
+    const currentConditions = this.currentConditions$.value.filter(data => data.zip !== zipcode);
+    this.currentConditions$.next(currentConditions);
   }
 
-  getCurrentConditions(): Condition[] {
-    return this.currentConditions;
+  getCurrentConditions$(): Observable<Condition[]> {
+    return this.currentConditions$.asObservable();
   }
 
   getForecast(zipcode: string): Observable<Forecast> {
     // Here we make a request to get the forecast data from the API. Note the use of backticks and an expression to insert the zipcode
     return this.http.get<Forecast>(`${WeatherService.URL}/forecast/daily?zip=${zipcode},us&units=imperial&cnt=5&APPID=${WeatherService.APPID}`);
-
   }
 
   getWeatherIcon(id: number): string {
