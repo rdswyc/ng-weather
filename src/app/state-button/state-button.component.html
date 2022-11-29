@@ -1,1 +1,7 @@
-<p>app-state-button works!</p>
+<button [class]="getClass()" [disabled]="state !== 'default'" (click)="click()">
+  <ng-container [ngSwitch]="state">
+    <ng-content select="[done]" *ngSwitchCase="'done'"></ng-content>
+    <ng-content select="[working]" *ngSwitchCase="'working'"></ng-content>
+    <ng-content *ngSwitchDefault></ng-content>
+  </ng-container>
+</button>

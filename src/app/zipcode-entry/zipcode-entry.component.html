@@ -2,7 +2,9 @@
   <h2>Enter a zipcode:</h2>
   <input type="text" #zipcode placeholder="Zipcode" class="form-control">
   <br>
-  <button class="btn btn-primary" (click)="addLocation(zipcode.value)" >
-    Add location
-  </button>
+  <app-state-button (onClick)="addLocation(zipcode.value)">
+    <span>Add location</span>
+    <span done>Done!</span>
+    <span working>Adding...</span>
+  </app-state-button>
 </div>

@@ -1,7 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, forkJoin, from, interval, Observable } from 'rxjs';
-import { bufferCount, concatMap, map, mergeMap, take } from 'rxjs/operators';
+import { bufferCount, concatMap, delay, map, mergeMap, take, tap } from 'rxjs/operators';
 
 import { Forecast } from './forecast';
 import { Weather } from './weather';
@@ -31,12 +31,15 @@ export class WeatherService {
     // No need to unsubscribe since this service is provided in the main AppModule
   }
 
-  addCurrentConditions(zipcode: string): void {
+  addCurrentConditions$(zipcode: string): Observable<Condition> {
     // Append each weather condition in the currentConditions as a new object
-    this.fetchCurrentCondition(zipcode).subscribe(data => this.currentConditions$.next([
-      ...this.currentConditions$.value.filter(c => c.zip !== zipcode),
-      data
-    ]));
+    return this.fetchCurrentCondition(zipcode).pipe(
+      delay(500),
+      tap(data => this.currentConditions$.next([
+        ...this.currentConditions$.value.filter(c => c.zip !== zipcode),
+        data
+      ]))
+    );
   }
 
   bulkAddCurrentConditions(conditions: Condition[]) {
