@@ -1,8 +1,10 @@
-<div class="well">
-  <h2>Enter a zipcode:</h2>
-  <input type="text" #zipcode placeholder="Zipcode" class="form-control">
-  <br>
-  <app-state-button (onClick)="addLocation(zipcode.value)">
+<div class="well form-inline">
+  <h2>Add by zipcode or country:</h2>
+  <div class="form-group" [formGroup]="form">
+    <input type="number" placeholder="Enter a zipcode" class="form-control" formControlName="zip">
+    <app-auto-filter placeholder="Enter a country" formControlName="country" [options]="countries"></app-auto-filter>
+  </div>
+  <app-state-button (onClick)="addLocation()" [disabled]="form.invalid">
     <span>Add location</span>
     <span done>Done!</span>
     <span working>Adding...</span>

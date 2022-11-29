@@ -1,4 +1,4 @@
-<button [class]="getClass()" [disabled]="state !== 'default'" (click)="click()">
+<button [class]="getClass()" [disabled]="disabled || state !== 'default'" (click)="click()">
   <ng-container [ngSwitch]="state">
     <ng-content select="[done]" *ngSwitchCase="'done'"></ng-content>
     <ng-content select="[working]" *ngSwitchCase="'working'"></ng-content>
