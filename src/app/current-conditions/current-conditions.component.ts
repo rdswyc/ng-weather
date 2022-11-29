@@ -16,7 +16,7 @@ export class CurrentConditionsComponent {
     public weatherService: WeatherService
   ) { }
 
-  showForecast(zipcode: string) {
-    this.router.navigate(['/forecast', zipcode])
+  showForecast(zip: string, country: string) {
+    this.router.navigate(['/forecast', `${zip},${country}`])
   }
 }

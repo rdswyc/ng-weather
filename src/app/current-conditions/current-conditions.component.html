@@ -1,5 +1,6 @@
 <div>
-  <div *ngFor="let location of weatherService.getCurrentConditions$() | async" class="well flex" (click)="showForecast(location.zip)">
+  <div class="well flex" (click)="showForecast(location.zip, location.country)"
+    *ngFor="let location of weatherService.getCurrentConditions$() | async">
     <div>
       <h3>{{location.data?.name}} ({{location.zip}})</h3>
       <h4>Current conditions: {{location.data?.weather[0].main}}</h4>

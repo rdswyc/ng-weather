@@ -6,7 +6,7 @@ import { bufferCount, concatMap, delay, map, mergeMap, take, tap } from 'rxjs/op
 import { Forecast } from './forecast';
 import { Weather } from './weather';
 
-type Condition = { zip: string, data: Weather };
+type Condition = { zip: string, country: string, data: Weather };
 
 @Injectable()
 export class WeatherService {
@@ -25,7 +25,7 @@ export class WeatherService {
       // Buffer conditions in blocks of {bufferSize} items
       mergeMap(() => from(this.currentConditions$.value).pipe(bufferCount(WeatherService.bufferSize))),
       // Join each block in parallel calls for performance and concurrency limit
-      concatMap(conditions => forkJoin(conditions.map(c => this.fetchCurrentCondition(c.zip, c.data?.sys.country)))),
+      concatMap(conditions => forkJoin(conditions.map(c => this.fetchCurrentCondition(c.zip, c.country)))),
       // Finally, bulk add each block of results to the current conditions
     ).subscribe(data => this.bulkAddCurrentConditions(data))
     // No need to unsubscribe since this service is provided in the main AppModule
@@ -36,7 +36,7 @@ export class WeatherService {
     return this.fetchCurrentCondition(zip, country).pipe(
       delay(500),
       tap(data => this.currentConditions$.next([
-        ...this.currentConditions$.value.filter(c => c.zip !== zip),
+        ...this.currentConditions$.value.filter(c => c.zip !== zip || c.country !== country),
         data
       ]))
     );
@@ -46,7 +46,7 @@ export class WeatherService {
     // Merge weather conditions in the currentConditions, based on their {zip} code
     const currentConditions = this.currentConditions$.value.map(condition => ({
       ...condition,
-      ...conditions.find(({ zip }) => zip === condition.zip),
+      ...conditions.find(({ zip, country }) => zip === condition.zip && country === condition.country),
     }));
     this.currentConditions$.next(currentConditions);
   }
@@ -54,11 +54,11 @@ export class WeatherService {
   fetchCurrentCondition(zip: string, country: string): Observable<Condition> {
     // Here we make a request to get the current conditions data from the API. Note the use of backticks and an expression to insert the zipcode
     return this.http.get<Weather>(`${WeatherService.URL}/weather?zip=${zip},${country}&units=imperial&APPID=${WeatherService.APPID}`)
-      .pipe(map(data => ({ zip: zip, data: data })), take(1));
+      .pipe(map(data => ({ zip, country, data })), take(1));
   }
 
-  removeCurrentConditions(zipcode: string): void {
-    const currentConditions = this.currentConditions$.value.filter(data => data.zip !== zipcode);
+  removeCurrentConditions(zip: string, country: string): void {
+    const currentConditions = this.currentConditions$.value.filter(data => data.zip !== zip || data.country !== country);
     this.currentConditions$.next(currentConditions);
   }
 
@@ -66,9 +66,9 @@ export class WeatherService {
     return this.currentConditions$.asObservable();
   }
 
-  getForecast(zipcode: string): Observable<Forecast> {
+  getForecast(zip: string, country: string): Observable<Forecast> {
     // Here we make a request to get the forecast data from the API. Note the use of backticks and an expression to insert the zipcode
-    return this.http.get<Forecast>(`${WeatherService.URL}/forecast/daily?zip=${zipcode},us&units=imperial&cnt=5&APPID=${WeatherService.APPID}`);
+    return this.http.get<Forecast>(`${WeatherService.URL}/forecast/daily?zip=${zip},${country}&units=imperial&cnt=5&APPID=${WeatherService.APPID}`);
   }
 
   getWeatherIcon(id: number): string {

@@ -10,7 +10,6 @@ import { WeatherService } from '../weather.service';
 })
 export class ForecastsListComponent {
 
-  zipcode: string;
   forecast: Forecast;
 
   constructor(
@@ -18,8 +17,9 @@ export class ForecastsListComponent {
     public weatherService: WeatherService
   ) {
     route.params.subscribe(params => {
-      this.zipcode = params['zipcode'];
-      weatherService.getForecast(this.zipcode)
+      const zipCountry = params['zipCountry'];
+      const [zip, country] = zipCountry.split(',');
+      weatherService.getForecast(zip, country)
         .subscribe(data => this.forecast = data);
     });
   }

@@ -19,9 +19,15 @@ export class LocationService {
   }
 
   async addLocation(zipCode: string, countryCode: string) {
-    await this.weatherService.addCurrentConditions$(zipCode, countryCode).toPromise();
-    this.locations.push(`${zipCode},${countryCode}`);
-    localStorage.setItem(LOCATIONS, JSON.stringify(this.locations));
+    const exists = this.locations.some(loc => loc === `${zipCode},${countryCode}`);
+
+    if (exists) {
+      alert('Zipcode and country combination already added!');
+    } else {
+      await this.weatherService.addCurrentConditions$(zipCode, countryCode).toPromise();
+      this.locations.push(`${zipCode},${countryCode}`);
+      localStorage.setItem(LOCATIONS, JSON.stringify(this.locations));
+    }
   }
 
   removeLocation(zipCode: string, countryCode: string) {
@@ -29,7 +35,7 @@ export class LocationService {
     if (index !== -1) {
       this.locations.splice(index, 1);
       localStorage.setItem(LOCATIONS, JSON.stringify(this.locations));
-      this.weatherService.removeCurrentConditions(zipCode);
+      this.weatherService.removeCurrentConditions(zipCode, countryCode);
     }
   }
 }
