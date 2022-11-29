@@ -25,18 +25,18 @@ export class WeatherService {
       // Buffer conditions in blocks of {bufferSize} items
       mergeMap(() => from(this.currentConditions$.value).pipe(bufferCount(WeatherService.bufferSize))),
       // Join each block in parallel calls for performance and concurrency limit
-      concatMap(conditions => forkJoin(conditions.map(c => this.fetchCurrentCondition(c.zip)))),
+      concatMap(conditions => forkJoin(conditions.map(c => this.fetchCurrentCondition(c.zip, c.data?.sys.country)))),
       // Finally, bulk add each block of results to the current conditions
     ).subscribe(data => this.bulkAddCurrentConditions(data))
     // No need to unsubscribe since this service is provided in the main AppModule
   }
 
-  addCurrentConditions$(zipcode: string): Observable<Condition> {
+  addCurrentConditions$(zip: string, country: string): Observable<Condition> {
     // Append each weather condition in the currentConditions as a new object
-    return this.fetchCurrentCondition(zipcode).pipe(
+    return this.fetchCurrentCondition(zip, country).pipe(
       delay(500),
       tap(data => this.currentConditions$.next([
-        ...this.currentConditions$.value.filter(c => c.zip !== zipcode),
+        ...this.currentConditions$.value.filter(c => c.zip !== zip),
         data
       ]))
     );
@@ -51,10 +51,10 @@ export class WeatherService {
     this.currentConditions$.next(currentConditions);
   }
 
-  fetchCurrentCondition(zipcode: string): Observable<Condition> {
+  fetchCurrentCondition(zip: string, country: string): Observable<Condition> {
     // Here we make a request to get the current conditions data from the API. Note the use of backticks and an expression to insert the zipcode
-    return this.http.get<Weather>(`${WeatherService.URL}/weather?zip=${zipcode},us&units=imperial&APPID=${WeatherService.APPID}`)
-      .pipe(map(data => ({ zip: zipcode, data: data })), take(1));
+    return this.http.get<Weather>(`${WeatherService.URL}/weather?zip=${zip},${country}&units=imperial&APPID=${WeatherService.APPID}`)
+      .pipe(map(data => ({ zip: zip, data: data })), take(1));
   }
 
   removeCurrentConditions(zipcode: string): void {

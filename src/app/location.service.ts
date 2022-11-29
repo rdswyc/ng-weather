@@ -12,22 +12,24 @@ export class LocationService {
     let locString = localStorage.getItem(LOCATIONS);
     if (locString)
       this.locations = JSON.parse(locString);
-    for (let loc of this.locations)
-      this.weatherService.addCurrentConditions$(loc).toPromise();
+    for (let loc of this.locations) {
+      const [zip, country] = loc.split(',');
+      this.weatherService.addCurrentConditions$(zip, country).toPromise();
+    }
   }
 
-  async addLocation(zipcode: string) {
-    this.locations.push(zipcode);
+  async addLocation(zipCode: string, countryCode: string) {
+    await this.weatherService.addCurrentConditions$(zipCode, countryCode).toPromise();
+    this.locations.push(`${zipCode},${countryCode}`);
     localStorage.setItem(LOCATIONS, JSON.stringify(this.locations));
-    await this.weatherService.addCurrentConditions$(zipcode).toPromise();
   }
 
-  removeLocation(zipcode: string) {
-    let index = this.locations.indexOf(zipcode);
+  removeLocation(zipCode: string, countryCode: string) {
+    let index = this.locations.indexOf(`${zipCode},${countryCode}`);
     if (index !== -1) {
       this.locations.splice(index, 1);
       localStorage.setItem(LOCATIONS, JSON.stringify(this.locations));
-      this.weatherService.removeCurrentConditions(zipcode);
+      this.weatherService.removeCurrentConditions(zipCode);
     }
   }
 }
